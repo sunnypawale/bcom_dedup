@@ -55,7 +55,7 @@ object Boot extends App with LazyLogging {
 
   sys.addShutdownHook(() => system.terminate())
 
-  openServerModeInBrowser()
+  //openServerModeInBrowser()
 
   def openServerModeInBrowser() {
     val server = Server.createWebServer().start()
