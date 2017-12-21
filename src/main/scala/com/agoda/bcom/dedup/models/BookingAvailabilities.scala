@@ -5,12 +5,21 @@ import java.security.MessageDigest
 import java.util.zip.CRC32
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include
-import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties, JsonInclude, JsonProperty}
+import com.fasterxml.jackson.annotation.{JsonIgnore, JsonInclude, JsonProperty}
 import com.google.common.io.ByteStreams
 
 case class BlocKey(hotelId: Int, checkIn: String, los: Short, blockId: String, channelId: Short) {
   @JsonIgnore lazy val key = s"${hotelId}_${checkIn}_${los}_${blockId}_$channelId"
 }
+
+case class RoomLevelKey(hotelId: Int, checkIn: String, los: Short, roomId: Long) {
+  @JsonIgnore lazy val key = s"${hotelId}_${checkIn}_${los}_$roomId"
+}
+
+case class BlockLevelKey(blockId: String, channelId: Short) {
+  @JsonIgnore lazy val key = s"${blockId}_$channelId"
+}
+
 
 case class BookingCharge(id: Int,
                          amount: Double,
@@ -41,6 +50,9 @@ case class BookingAvailability(@JsonProperty("hotel_id") hotelId: Int,
                                charges: BookingCharges) {
 
   @JsonIgnore lazy val blockKey = BlocKey(hotelId, checkIn, lengthOfStay, blockId, channel)
+  @JsonIgnore lazy val roomLevelKey = RoomLevelKey(hotelId, checkIn, lengthOfStay, roomId)
+  @JsonIgnore lazy val blockLevelKey = BlockLevelKey(blockId, channel)
+
 
   // be careful. changing this method causes hashes mismatch
   private def toBinary: Array[Byte] = {
@@ -80,7 +92,7 @@ case class BookingAvailability(@JsonProperty("hotel_id") hotelId: Int,
     o.toByteArray
   }
 
-   def getHash(withMD5: Boolean) = {
+  def getHash(withMD5: Boolean) = {
     withMD5 match {
       case true => getCrcMD5()
       case _ => toByteArray(getCrc32())
@@ -108,10 +120,10 @@ case class BookingAvailability(@JsonProperty("hotel_id") hotelId: Int,
 
 }
 
-case class BookingHotelRooms(@JsonProperty("hotel_id") hotelId: String,
-                             @JsonProperty("room_ids") rooms: List[String])
+case class BookingHotelRooms(@JsonProperty("hotel_id") hotelId: Int,
+                             @JsonProperty("room_ids") rooms: List[Int])
 
-case class BookingUnavailable(@JsonProperty("los") lengthOfStay: Int,
+case class BookingUnavailable(@JsonProperty("los") lengthOfStay: Short,
                               hotels: List[BookingHotelRooms])
 
 case class BookingUnavailables(@JsonProperty("checkin") checkIn: String,
